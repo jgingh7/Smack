@@ -1,9 +1,11 @@
-package io.github.jgingh7.smack
+package io.github.jgingh7.smack.controller
 
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import io.github.jgingh7.smack.R
+import io.github.jgingh7.smack.services.AuthService
 import kotlinx.android.synthetic.main.activity_create_user.*
 import java.util.*
 
@@ -46,6 +48,10 @@ class CreateUserActivity : AppCompatActivity() {
     }
 
     fun createUserClicked(view: View) {
+        AuthService.registerUser(this, "j@j.com", "123456") { complete ->
+            if (complete) {
 
+            }
+        }
     }
 }
