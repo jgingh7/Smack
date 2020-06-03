@@ -64,13 +64,13 @@ class CreateUserActivity : AppCompatActivity() {
             var currState = ""
 
             AuthService.registerUser(this, email, password) { registerSuccess ->
-                currState = "Register User"
+                currState = "Register user"
                 if (registerSuccess) {
                     AuthService.loginUser(this, email, password) { loginSuccess ->
-                        currState = "Login User"
+                        currState = "Login user"
                         if (loginSuccess) {
                             AuthService.createUser(this, userName, email, userAvatar, avatarColor) { createSuccess ->
-                                currState = "Create User"
+                                currState = "Create user"
                                 if (createSuccess) {
                                     //local broadcast when create user is successful
                                     val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)

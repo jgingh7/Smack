@@ -20,5 +20,7 @@ class LoginActivity : AppCompatActivity() {
     fun loginUserBtnClicked(view: View) {
         val createUserIntent = Intent(this, CreateUserActivity::class.java)
         startActivity(createUserIntent)
+        finish() // finish LoginActivity
+                 // if not stays on activity_login layout after createUser Activity is finished
     }
 }
