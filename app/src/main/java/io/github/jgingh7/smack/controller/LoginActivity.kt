@@ -26,7 +26,6 @@ class LoginActivity : AppCompatActivity() {
 
         var currState = ""
 
-        hideKeyboard()
         if (email.isNotEmpty() && password.isNotEmpty()) {
             AuthService.loginUser(this, email, password) { loginSuccess ->
                 currState = "Login user"
@@ -75,13 +74,5 @@ class LoginActivity : AppCompatActivity() {
         loginPasswordTxt.isEnabled = !enable
         loginLoginBtn.isEnabled = !enable
         loginCreateUserBtn.isEnabled = !enable
-    }
-
-    fun hideKeyboard() {
-        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager //get an object and cast it as an InputMethodManager
-
-        if (inputManager.isAcceptingText) {
-            inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
-        }
     }
 }

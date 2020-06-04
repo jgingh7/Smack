@@ -23,9 +23,13 @@ import io.github.jgingh7.smack.R
 import io.github.jgingh7.smack.services.AuthService
 import io.github.jgingh7.smack.services.UserDataService
 import io.github.jgingh7.smack.utilities.BROADCAST_USER_DATA_CHANGE
+import io.github.jgingh7.smack.utilities.SOCKET_URL
+import io.socket.client.IO
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    val socket = IO.socket(SOCKET_URL)
 
     private lateinit var appBarConfiguration: AppBarConfiguration
 
@@ -46,12 +50,25 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_slideshow
         ), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
+    }
 
-        hideKeyboard() // hides the keyboard that would pop up whenever app is initiated
+    override fun onResume() {
+        super.onResume()
 
         // broadcast receiver
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE)) // finding the specific broadcast
+
+        socket.connect()
+    }
+
+    override fun onDestroy() {
+        // you should unregister the broadcast receiver when leaving this activity
+        // unregistering broadcast receiver
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
+
+        socket.disconnect()
+        super.onDestroy()
     }
 
     // creating receiver
@@ -99,21 +116,20 @@ class MainActivity : AppCompatActivity() {
                     val nameTxtField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
                     val descTxtField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
                     val channelName = nameTxtField.text.toString()
-                    val channelDesc = nameTxtField.text.toString()
+                    val channelDesc = descTxtField.text.toString()
 
                     // create channel with the channel name and description
-                    hideKeyboard()
+                    socket.emit("newChannel", channelName, channelDesc) // the API is listening to "newChannel" // the order here matters because that is how the API is set up to listen
                 }
                 .setNegativeButton("Cancel") {dialog, which -> // when clicked "cancel"
                     // close the dialog (the dialog closes if nothing is coded here)
-                    hideKeyboard()
                 }
                 .show()
         }
     }
 
     fun sendMsgBtnClicked(view: View) {
-
+        hideKeyboard()
     }
 
     fun hideKeyboard() {
