@@ -20,11 +20,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.jgingh7.smack.R
+import io.github.jgingh7.smack.model.Channel
 import io.github.jgingh7.smack.services.AuthService
+import io.github.jgingh7.smack.services.MessageService
 import io.github.jgingh7.smack.services.UserDataService
 import io.github.jgingh7.smack.utilities.BROADCAST_USER_DATA_CHANGE
 import io.github.jgingh7.smack.utilities.SOCKET_URL
 import io.socket.client.IO
+import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -38,6 +41,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
+
+        socket.connect()
+        // listening for a specific event called "channelCreated",
+        // and if detected, use listener called onNewChannel
+        socket.on("channelCreated", onNewChannel) // "channelCreated" in the API code
+        // if put on onResume() socket connect happens twice when a channel is made
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
@@ -58,8 +67,6 @@ class MainActivity : AppCompatActivity() {
         // broadcast receiver
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE)) // finding the specific broadcast
-
-        socket.connect()
     }
 
     override fun onDestroy() {
@@ -125,6 +132,22 @@ class MainActivity : AppCompatActivity() {
                     // close the dialog (the dialog closes if nothing is coded here)
                 }
                 .show()
+        }
+    }
+
+    // emitter listener (listens to the emissions of the API)
+    // when we receive a new channel
+    private val onNewChannel = Emitter.Listener { args -> // the call back is on a worker thread
+        runOnUiThread { // so runOnUiThread to execute on UI thread
+            val channelName = args[0] as String // args is of Any type, so need to cast it to String object
+            val channelDescription = args[1] as String
+            val channelId = args[2] as String
+
+            val newChannel = Channel(channelName, channelDescription, channelId)
+            MessageService.channels.add(newChannel)
+            println(newChannel.name)
+            println(newChannel.description)
+            println(newChannel.id)
         }
     }
 
