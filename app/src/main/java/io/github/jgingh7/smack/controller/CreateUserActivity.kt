@@ -75,6 +75,7 @@ class CreateUserActivity : AppCompatActivity() {
                                     //local broadcast when create user is successful
                                     val userDataChange = Intent(BROADCAST_USER_DATA_CHANGE)
                                     LocalBroadcastManager.getInstance(this).sendBroadcast(userDataChange)
+
                                     enableSpinner(false)
                                     finish() //dismiss an activity
                                 } else {
