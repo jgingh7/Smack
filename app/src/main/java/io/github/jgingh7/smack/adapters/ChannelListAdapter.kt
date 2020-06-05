@@ -9,14 +9,14 @@ import androidx.recyclerview.widget.RecyclerView
 import io.github.jgingh7.smack.R
 import io.github.jgingh7.smack.model.Channel
 
-class ChannelListAdapter(private val context: Context, private val channels: ArrayList<Channel>) : RecyclerView.Adapter<ChannelListAdapter.Holder>() {
+class ChannelListAdapter(private val context: Context, private val channels: ArrayList<Channel>, private val itemClick: (Channel) -> Unit) : RecyclerView.Adapter<ChannelListAdapter.Holder>() {
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         private val channelName = itemView.findViewById<TextView>(R.id.channelName)
 
         fun bindCategory(channel: Channel, context: Context) {
             channelName?.text = channel.toString()
-//            itemView.setOnClickListener { itemClick(category) }
+            itemView.setOnClickListener { itemClick(channel) }
         }
     }
 

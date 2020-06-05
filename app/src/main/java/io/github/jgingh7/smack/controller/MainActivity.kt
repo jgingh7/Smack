@@ -19,6 +19,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import io.github.jgingh7.smack.R
@@ -32,11 +33,14 @@ import io.github.jgingh7.smack.utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
+    var selectedChannel: Channel? = null // if not logged in, no selectedChannel
+
     //listview version
 //    lateinit var channelAdapter: ArrayAdapter<Channel>
 //
@@ -50,7 +54,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupAdapters() {
 //        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
 //        channel_list.adapter = channelAdapter
-        channelAdapter = ChannelListAdapter(this, MessageService.channels)
+        channelAdapter = ChannelListAdapter(this, MessageService.channels) { channel ->
+            selectedChannel = channel
+            drawer_layout.closeDrawer(GravityCompat.START) // close the drawer
+            updateWithChannel()
+        }
         channel_list.adapter = channelAdapter
 
         val layoutManager = LinearLayoutManager(this)
@@ -83,6 +91,13 @@ class MainActivity : AppCompatActivity() {
         ), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
         setupAdapters()
+
+        // for ListView
+//        channel_list.setOnItemClickListener { _, _, i, _ ->
+//            selectedChannel = MessageService.channels[i]
+//            drawer_layout.closeDrawer(GravityCompat.START)
+//            updateWithChannel()
+//        }
 
         // check to see if logged in
         // if logged in find user
@@ -124,11 +139,21 @@ class MainActivity : AppCompatActivity() {
 
                 MessageService.getChannels { complete ->
                     if (complete) {
-                        channelAdapter.notifyDataSetChanged() // telling adapter to reload the recycle view because the data set changed
+                        if (MessageService.channels.count() > 0) {
+                            selectedChannel = MessageService.channels[0] // have the first channel as selectedChannel by default
+                            channelAdapter.notifyDataSetChanged() // telling adapter to reload the recycle view because the data set changed
+                            updateWithChannel()
+                        }
                     }
                 }
             }
         }
+    }
+
+    // a called function whenever we click on (select) a new channel from the list of channels
+    fun updateWithChannel() {
+        mainChannelName.text = "${selectedChannel?.toString()}"
+        // download messages for channel
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -158,7 +183,7 @@ class MainActivity : AppCompatActivity() {
             val dialogView = layoutInflater.inflate(R.layout.add_channel_dialog, null)
 
             builder.setView(dialogView)
-                .setPositiveButton("Add") { dialog, which -> // when clicked "add"
+                .setPositiveButton("Add") { _, _ -> // when clicked "add"
                     val nameTextField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
                     val descTextField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
                     val channelName = nameTextField.text.toString()
@@ -167,7 +192,7 @@ class MainActivity : AppCompatActivity() {
                     // create channel with the channel name and description
                     socket.emit("newChannel", channelName, channelDesc) // the API is listening to "newChannel" // the order here matters because that is how the API is set up to listen
                 }
-                .setNegativeButton("Cancel") { dialogInterface, i ->
+                .setNegativeButton("Cancel") { _, _ ->
                     // Cancel and close the dialog
                 }
                 .show()
