@@ -1,6 +1,7 @@
 package io.github.jgingh7.smack.services
 
 import android.graphics.Color
+import io.github.jgingh7.smack.controller.App
 import java.util.*
 
 object UserDataService {
@@ -17,9 +18,9 @@ object UserDataService {
         avatarName = ""
         email = ""
         name = ""
-        AuthService.authToken = ""
-        AuthService.userEmail = ""
-        AuthService.isLoggedIn = false
+        App.prefs.authToken = ""
+        App.prefs.userEmail = ""
+        App.prefs.isLoggedIn = false
     }
 
     // returning a color from String "[double, double, double, 1]" to Int
