@@ -24,7 +24,7 @@ object AuthService {
 //    App.prefs.authToken
 
     // sends a json body request (email, password)
-    fun registerUser(context: Context, email: String, password: String, complete: (Boolean) -> Unit) {
+    fun registerUser(email: String, password: String, complete: (Boolean) -> Unit) {
         
         val jsonBody = JSONObject()
         jsonBody.put("email", email)
@@ -53,7 +53,7 @@ object AuthService {
 
     // sends a json body request (email, password)
     // gets back a json API response (user (the email), token)
-    fun loginUser(context: Context, email: String, password: String, complete: (Boolean) -> Unit) {
+    fun loginUser(email: String, password: String, complete: (Boolean) -> Unit) {
         val jsonBody = JSONObject()
         jsonBody.put("email", email)
         jsonBody.put("password", password)
@@ -92,7 +92,7 @@ object AuthService {
 
     // sends a json header (token) and body request (name, email, avatarName, avatarColor)
     // gets back a json API response (email, name, avatarName, avatarColor, id)
-    fun createUser(context: Context, name: String, email: String, avatarName: String, avatarColor: String, complete: (Boolean) -> Unit) {
+    fun createUser(name: String, email: String, avatarName: String, avatarColor: String, complete: (Boolean) -> Unit) {
         val jsonBody = JSONObject()
         // the order should be the same as the json request
         jsonBody.put("name", name)

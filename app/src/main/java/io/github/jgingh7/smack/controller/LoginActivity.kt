@@ -27,7 +27,7 @@ class LoginActivity : AppCompatActivity() {
         var currState = ""
 
         if (email.isNotEmpty() && password.isNotEmpty()) {
-            AuthService.loginUser(this, email, password) { loginSuccess ->
+            AuthService.loginUser(email, password) { loginSuccess ->
                 currState = "Login user"
                 if (loginSuccess) {
                     AuthService.findUserByEmail(this) { findSuccess ->

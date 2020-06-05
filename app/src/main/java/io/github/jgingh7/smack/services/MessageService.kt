@@ -16,7 +16,7 @@ object MessageService {
 
     // sends a json header (token) request
     // gets back a json API response as an array (_id, name, description)
-    fun getChannels(context: Context, complete: (Boolean) -> Unit) {
+    fun getChannels(complete: (Boolean) -> Unit) {
         val channelsRequest = object : JsonArrayRequest(Method.GET, URL_GET_CHANNELS, null, Response.Listener { response ->
             try {
                 for (x in 0 until response.length()) { // start at 0 and count until length of response

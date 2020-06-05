@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                 userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                 loginBtnNavHeader.text = "Logout"
 
-                MessageService.getChannels(context) { complete ->
+                MessageService.getChannels { complete ->
                     if (complete) {
                         channelAdapter.notifyDataSetChanged() // telling adapter to reload the recycle view because the data set changed
                     }

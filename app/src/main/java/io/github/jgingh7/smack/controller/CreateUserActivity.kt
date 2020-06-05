@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import io.github.jgingh7.smack.R
 import io.github.jgingh7.smack.services.AuthService
-import io.github.jgingh7.smack.services.UserDataService
 import io.github.jgingh7.smack.utilities.BROADCAST_USER_DATA_CHANGE
 import kotlinx.android.synthetic.main.activity_create_user.*
 import java.util.*
@@ -64,13 +63,13 @@ class CreateUserActivity : AppCompatActivity() {
         if (userName.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) { //make sure non of the three are empty
             var currState = ""
 
-            AuthService.registerUser(this, email, password) { registerSuccess ->
+            AuthService.registerUser(email, password) { registerSuccess ->
                 currState = "Register user"
                 if (registerSuccess) {
-                    AuthService.loginUser(this, email, password) { loginSuccess ->
+                    AuthService.loginUser(email, password) { loginSuccess ->
                         currState = "Login user"
                         if (loginSuccess) {
-                            AuthService.createUser(this, userName, email, userAvatar, avatarColor) { createSuccess ->
+                            AuthService.createUser(userName, email, userAvatar, avatarColor) { createSuccess ->
                                 currState = "Create user"
                                 if (createSuccess) {
                                     //local broadcast when create user is successful
