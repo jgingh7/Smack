@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.navigation.NavigationView
@@ -19,7 +20,9 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import io.github.jgingh7.smack.R
+import io.github.jgingh7.smack.adapters.ChannelListAdapter
 import io.github.jgingh7.smack.model.Channel
 import io.github.jgingh7.smack.services.AuthService
 import io.github.jgingh7.smack.services.MessageService
@@ -28,11 +31,30 @@ import io.github.jgingh7.smack.utilities.BROADCAST_USER_DATA_CHANGE
 import io.github.jgingh7.smack.utilities.SOCKET_URL
 import io.socket.client.IO
 import io.socket.emitter.Emitter
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.nav_header_main.*
 
 class MainActivity : AppCompatActivity() {
 
     val socket = IO.socket(SOCKET_URL)
+//    lateinit var channelAdapter: ArrayAdapter<Channel>
+//
+//    private fun setupAdapters() {
+//        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
+//        channel_list.adapter = channelAdapter
+//    }
+
+    lateinit var channelAdapter: ChannelListAdapter
+
+    private fun setupAdapters() {
+//        channelAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, MessageService.channels)
+//        channel_list.adapter = channelAdapter
+        channelAdapter = ChannelListAdapter(this, MessageService.channels)
+        channel_list.adapter = channelAdapter
+
+        val layoutManager = LinearLayoutManager(this)
+        channel_list.layoutManager = layoutManager
+    }
 
     private lateinit var appBarConfiguration: AppBarConfiguration
 
@@ -59,36 +81,45 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_slideshow
         ), drawerLayout)
         setupActionBarWithNavController(navController, appBarConfiguration)
+        setupAdapters()
     }
 
     override fun onResume() {
-        super.onResume()
-
         // broadcast receiver
         LocalBroadcastManager.getInstance(this).registerReceiver(userDataChangeReceiver,
             IntentFilter(BROADCAST_USER_DATA_CHANGE)) // finding the specific broadcast
+
+        super.onResume()
     }
 
     override fun onDestroy() {
+        socket.disconnect()
+
         // you should unregister the broadcast receiver when leaving this activity
         // unregistering broadcast receiver
         LocalBroadcastManager.getInstance(this).unregisterReceiver(userDataChangeReceiver)
 
-        socket.disconnect()
         super.onDestroy()
     }
 
-    // creating receiver
+    // creating broadcast receiver
     private val userDataChangeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+        override fun onReceive(context: Context, intent: Intent?) {
             //update nav header UI
             if (AuthService.isLoggedIn) {
                 userNameNavHeader.text = UserDataService.name
                 userEmailNavHeader.text = UserDataService.email
-                val resourceId = resources.getIdentifier(UserDataService.avatarName, "drawable", packageName) // UserDataService.(image String)
+                val resourceId = resources.getIdentifier(UserDataService.avatarName, "drawable",
+                    packageName) // UserDataService.(image String)
                 userImageNavHeader.setImageResource(resourceId)
                 userImageNavHeader.setBackgroundColor(UserDataService.returnAvatarColor(UserDataService.avatarColor))
                 loginBtnNavHeader.text = "Logout"
+
+                MessageService.getChannels(context) { complete ->
+                    if (complete) {
+                        channelAdapter.notifyDataSetChanged() // telling adapter to reload the recycle view because the data set changed
+                    }
+                }
             }
         }
     }
@@ -99,6 +130,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun loginBtnNavClicked(view: View) {
+
         if (AuthService.isLoggedIn) { // when logged in, click this button to logout
             UserDataService.logout()
             userNameNavHeader.text = ""
@@ -106,11 +138,11 @@ class MainActivity : AppCompatActivity() {
             userImageNavHeader.setImageResource(R.drawable.profiledefault)
             userImageNavHeader.setBackgroundColor(Color.TRANSPARENT)
             loginBtnNavHeader.text = "Login"
+
         } else { // when not logged in, click this button to login
             val loginIntent = Intent(this, LoginActivity::class.java)
             startActivity(loginIntent)
         }
-
     }
 
     fun addChannelClicked(view: View) {
@@ -120,16 +152,16 @@ class MainActivity : AppCompatActivity() {
 
             builder.setView(dialogView)
                 .setPositiveButton("Add") { dialog, which -> // when clicked "add"
-                    val nameTxtField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
-                    val descTxtField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
-                    val channelName = nameTxtField.text.toString()
-                    val channelDesc = descTxtField.text.toString()
+                    val nameTextField = dialogView.findViewById<EditText>(R.id.addChannelNameTxt)
+                    val descTextField = dialogView.findViewById<EditText>(R.id.addChannelDescTxt)
+                    val channelName = nameTextField.text.toString()
+                    val channelDesc = descTextField.text.toString()
 
                     // create channel with the channel name and description
                     socket.emit("newChannel", channelName, channelDesc) // the API is listening to "newChannel" // the order here matters because that is how the API is set up to listen
                 }
-                .setNegativeButton("Cancel") {dialog, which -> // when clicked "cancel"
-                    // close the dialog (the dialog closes if nothing is coded here)
+                .setNegativeButton("Cancel") { dialogInterface, i ->
+                    // Cancel and close the dialog
                 }
                 .show()
         }
@@ -145,9 +177,7 @@ class MainActivity : AppCompatActivity() {
 
             val newChannel = Channel(channelName, channelDescription, channelId)
             MessageService.channels.add(newChannel)
-            println(newChannel.name)
-            println(newChannel.description)
-            println(newChannel.id)
+            channelAdapter.notifyDataSetChanged() // immediately after the addition of channel, it pops up on the recycle view
         }
     }
 
@@ -155,8 +185,8 @@ class MainActivity : AppCompatActivity() {
         hideKeyboard()
     }
 
-    fun hideKeyboard() {
-        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager //get an object and cast it as an InputMethodManager
+    private fun hideKeyboard() {
+        val inputManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
         if (inputManager.isAcceptingText) {
             inputManager.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
